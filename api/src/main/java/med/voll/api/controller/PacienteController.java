@@ -18,59 +18,56 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import jakarta.validation.Valid;
 import med.voll.api.medico.DadosAtualizacaoMedico;
-import med.voll.api.medico.DadosCadastroMedico;
 import med.voll.api.medico.DadosDetalhamentoMedico;
 import med.voll.api.medico.DadosListagemMedico;
 import med.voll.api.medico.Medico;
-import med.voll.api.medico.MedicoRepository;
+import med.voll.api.paciente.DadosAtualizacaoPaciente;
+import med.voll.api.paciente.DadosCadastroPaciente;
+import med.voll.api.paciente.DadosDetalhamentoPaciente;
+import med.voll.api.paciente.DadosListagemPaciente;
+import med.voll.api.paciente.Paciente;
+import med.voll.api.paciente.PacienteRepository;
 
 @RestController
-@RequestMapping("medicos")
-public class MedicoController {
-	
+@RequestMapping("pacientes")
+public class PacienteController {
+
 	@Autowired
-	private MedicoRepository repository;
-	
+	private PacienteRepository repository;
+
 	@PostMapping
 	@Transactional
-	public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroMedico dados, UriComponentsBuilder uriBuilder) {
-		Medico medico = new Medico(dados);
-		repository.save(medico); // Faz insert na tabela do banco
-		
-		var uri = uriBuilder.path("/medicos/{id}").buildAndExpand(medico.getId()).toUri();
-		
-		return ResponseEntity.created(uri).body(new DadosDetalhamentoMedico(medico)); // Cria  objeto response entity
+	public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroPaciente dados, UriComponentsBuilder uriBuilder) {
+		Paciente paciente = new Paciente(dados);
+		repository.save(paciente);
+
+		var uri = uriBuilder.path("/pacientes/{id}").buildAndExpand(paciente.getId()).toUri();
+
+		return ResponseEntity.created(uri).body(new DadosDetalhamentoPaciente(paciente)); // Cria objeto response entity
 	}
 	
 	@GetMapping
-	 public ResponseEntity<Page<DadosListagemMedico>> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
-        var page = repository.findAllByAtivoTrue(paginacao).map(DadosListagemMedico::new);
-        
-        return ResponseEntity.ok(page);
+	 public ResponseEntity<Page<DadosListagemPaciente>> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
+       var page = repository.findAllByAtivoTrue(paginacao).map(DadosListagemPaciente::new);
+       
+       return ResponseEntity.ok(page);
 	}
 	
 	@PutMapping
 	@Transactional // Como utilizaremos um método de escrita, precisaremos de uma transação
-	public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoMedico dados) {
-		Medico medico = repository.getReferenceById(dados.id());
-		medico.atualizarInformacoes(dados);
+	public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoPaciente dados) {
+		Paciente paciente = repository.getReferenceById(dados.id());
+		paciente.atualizarInformacoes(dados);
 		
-		return ResponseEntity.ok(new DadosDetalhamentoMedico(medico));
+		return ResponseEntity.ok(new DadosDetalhamentoPaciente(paciente));
 	}
 	
 	@DeleteMapping("/{id}")
 	@Transactional // Apenas para métodos de escrita... delete/update/insert
 	public ResponseEntity deletar(@PathVariable Long id) {
-		Medico medico = repository.getReferenceById(id);
-		medico.excluir();
+		Paciente paciente = repository.getReferenceById(id);
+		paciente.excluir();
 		
 		return ResponseEntity.noContent().build();
-	}
-	
-	@GetMapping("/{id}")
-	public ResponseEntity detalhar(@PathVariable Long id) {
-		Medico medico = repository.getReferenceById(id); // Carrega medico do banco
-		
-		return ResponseEntity.ok(new DadosDetalhamentoMedico(medico));
 	}
 }
